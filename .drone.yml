@@ -1,0 +1,35 @@
+kind: pipeline
+type: docker
+name: lund
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: build
+    image: plugins/docker
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+    settings:
+      repo: rpanic.registry.jetbrains.space/p/projects/containers/oeuv-bot
+      registry: rpanic.registry.jetbrains.space
+      tags: latest
+      username:
+        from_secret: space_registry_username
+      password:
+        from_secret: space_registry_password
+      dockerfile: Dockerfile
+
+image_pull_secrets:
+  - repo_login
+
+volumes:
+  - name: docker_sock
+    host:
+      path: /var/run/docker.sock
+
+trigger:
+  branch:
+    - master
