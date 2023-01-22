@@ -73,7 +73,8 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, ListenerAdapter(){
             Du kannst auch mehrere Nachrichten schicken, diese werden dann zusammengefügt.
             """.trimIndent())
             .addActionRow(
-                Button.secondary("drehscheibe-confirm", Emoji.fromUnicode("U+2705")) //Check mark
+                Button.secondary("drehscheibe-confirm", Emoji.fromUnicode("U+2705")), //Check mark
+                Button.secondary("drehscheibe-abort", Emoji.fromUnicode("U+274C"))
 //                Button.secondary("drehscheibe-refresh", Emoji.fromUnicode("U+1F503"))
             )
             .complete()
@@ -190,6 +191,22 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, ListenerAdapter(){
                     }else{
                         event.reply("Nachricht ist leer!").setEphemeral(true).complete()
                     }
+                }
+                "drehscheibe-abort" -> {
+
+                    val edit = openEdits.find { it.user.idLong == event.user.idLong }
+
+                    if(edit != null){
+                        this.openEdits.remove(edit)
+
+                        event.reply("Abgebrochen!").setEphemeral(true).complete()
+
+                        //Remove action row
+                        removeActionRowsForMsgs(listOf(event.message))
+                    }else {
+                        event.reply("Etwas ist schiefgelaufen").setEphemeral(true).queue()
+                    }
+
                 }
                 "drehscheibe-admin-decline" -> {
 
