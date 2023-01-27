@@ -314,8 +314,9 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, ListenerAdapter(){
 
         val channel = bot.guild.getTextChannelById(config().channels.infos)!!
         channel.sendMessage("""
-            Willst du etwas in die Drehscheibe posten?
-            Klicke auf das :envelope:
+            **Drehscheibe**
+            Die neue Drehscheibe ist sehr ähnlich wie die alte Drehscheibe strukturiert und soll auch die selben Informationen beinhalten. 
+            Um eine Ausschreibung an die Drehscheibe zu schicken, kannst du entweder `/drehscheibe` in irgendeinen Kanal schreiben oder auf das :envelope: unter dieser Nachricht klicken. Danach meldet sich unser Bot mit allen weiteren Infos.
         """.trimIndent())
             .setActionRow(
                 Button.secondary("drehscheibe-send", Emoji.fromUnicode("U+2709"))

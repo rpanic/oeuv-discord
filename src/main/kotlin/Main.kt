@@ -44,7 +44,7 @@ class OEUVBot(token: String){
 
         initFromDB()
 
-        val adminRole = guild.getRolesByName("Admin", true).first()
+        val adminRole = guild.getRolesByName("Discord Admin", true).first()
         guild.loadMembers().onSuccess {
             println(it)
             val adminUsers = guild.getMembersWithRoles(adminRole)
