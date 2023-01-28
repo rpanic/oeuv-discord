@@ -1,5 +1,7 @@
 ### ÖUV Discord Bot
 
+[![Build Status](https://drone.rpanic.com/api/badges/rpanic/oeuv-discord/status.svg)](https://drone.rpanic.com/rpanic/oeuv-discord)
+
 #### Setup
 
 Setup is described for Docker build, for standalone build see [Dockerfile](Dockerfile)
