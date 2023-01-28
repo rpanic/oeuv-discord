@@ -44,14 +44,23 @@ class OEUVBot(token: String){
 
         initFromDB()
 
-        val adminRole = guild.getRolesByName("Discord Admin", true).first()
-        guild.loadMembers().onSuccess {
-            println(it)
-            val adminUsers = guild.getMembersWithRoles(adminRole)
-            admins += adminUsers.map { it.idLong }
-        }
+        reloadAdmins()
 
         initCommands()
+
+    }
+
+    fun reloadAdmins(callback: (Boolean) -> Unit = {}){
+        val adminRole = guild.getRolesByName("Discord Admin", true).first()
+        guild.loadMembers().onSuccess {
+
+            val adminUsers = guild.getMembersWithRoles(adminRole)
+            admins += adminUsers.map { it.idLong }
+
+            println("Loaded Admins ${adminUsers.map { it.effectiveName }}")
+            callback(true)
+
+        }.onError { callback(false) }
 
     }
 

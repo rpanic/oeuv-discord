@@ -68,7 +68,9 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, ListenerAdapter(){
         val channel = user.openPrivateChannel().complete()
 
         val msg = channel.sendMessage("""
-            Um Nachrichten an die Drehscheibe zu senden, schreibe den Text, den du send willst bitte in diesen Chat.
+            Um Nachrichten an die Drehscheibe zu senden, schreibe den Text, den du senden willst bitte in diesen Chat.
+            Schreibe zuerst den Betreff und dann die restliche Nachricht (der Bot formatiert die erste Zeile deiner Nachricht automatisch zur Überschrift).
+            In deinem Text kannst du Discord-Markdown verwenden (siehe FAQs).
             **Erst wenn du fertig bist, drücke den grünen Button**, danach wird die Nachricht an unsere Admins geschickt, die diese dann bestätigen.
             Du kannst auch mehrere Nachrichten schicken, diese werden dann zusammengefügt.
             """.trimIndent())
@@ -90,6 +92,8 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, ListenerAdapter(){
             mutableListOf(),
             mutableMapOf()
         )
+
+        this.bot.reloadAdmins()
 
     }
 
@@ -156,11 +160,11 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, ListenerAdapter(){
 
     private fun updatePreview(edit: OpenEdit, channel: PrivateChannel) {
 
-        val content = edit.getContent()
+        val content = edit.getHeaderFormatted() + "\n\n" + edit.getContent()
 
         val msg = channel.retrieveMessageById(edit.previewMessage).complete()
 
-        msg.editMessage("$PREVIEW_HEADER\n\n $content\n\n-").complete()
+        msg.editMessage("$PREVIEW_HEADER\n\n$content\n\n-").complete()
 
     }
 
@@ -179,7 +183,7 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, ListenerAdapter(){
 
                     val edit = openEdits.find { it.user.idLong == event.user.idLong }!!
 
-                    if(queueDrehscheibeMessage(edit.getContent(), event.user)){
+                    if(queueDrehscheibeMessage(edit.getHeaderFormatted(), edit.getContent(), event.user)){
 
                         this.openEdits.remove(edit)
 
@@ -245,7 +249,7 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, ListenerAdapter(){
                         //Send drehscheibe message
                         val user = jda.retrieveUserById(request.user).complete()
                         bot.guild.getTextChannelById(bot.drehscheibeChannel)!!
-                            .sendMessage("@everyone \n<@${user.idLong}>: \n\n" + request.content)
+                            .sendMessage(this.getFormattedDrehscheibeMessage(request.header, request.content, user))
                             .complete()
 
                         adminQueue.remove(request)
@@ -280,19 +284,18 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, ListenerAdapter(){
 
     }
 
-    private fun queueDrehscheibeMessage(content: String, user: User) : Boolean{
+    private fun queueDrehscheibeMessage(header: String, content: String, user: User) : Boolean{
 
         if(content.trim().isBlank()){
             return false
         }
 
+        val messageContent = this.getFormattedDrehscheibeMessage(header, content, user)
+
         val msgs = bot.admins.map {
             val adminUser = jda.retrieveUserById(it).complete()!! //Should be cached though
             val channel = adminUser.openPrivateChannel().complete()
-            val msg = channel.sendMessage("""
-                ${user.asTag} möchte folgendes in die Drehscheibe posten:
-                ${content}
-            """.trimIndent())
+            val msg = channel.sendMessage("${user.asTag} möchte folgendes in die Drehscheibe posten:\n${messageContent}")
                 .addActionRow(
                     Button.secondary("drehscheibe-admin-accept", Emoji.fromUnicode("U+2705")),
                     Button.secondary("drehscheibe-admin-decline", Emoji.fromUnicode("U+274C"))
@@ -302,6 +305,7 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, ListenerAdapter(){
         }
 
         this.adminQueue += PendingDrehscheibeRequest(
+            header,
             content,
             user.idLong,
             msgs
@@ -325,9 +329,14 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, ListenerAdapter(){
 
     }
 
+    fun getFormattedDrehscheibeMessage(header: String, content: String, user: User) : String{
+        return "${header}\n\n@everyone \nVon <@${user.idLong}>: \n\n" + content
+    }
+
 }
 
 data class PendingDrehscheibeRequest(
+    val header: String,
     val content: String,
     val user: Long,
     val adminMessages: List<Pair<Long, Long>>
@@ -341,9 +350,32 @@ data class OpenEdit(
     val messages: MutableList<Long>,
     val fragments: MutableMap<Long, String>
 ){
+
+    companion object {
+        const val FRAGMENT_SPLIT = "\n"
+    }
+
+    fun getHeaderFormatted() : String{
+        val header = this.messages.firstOrNull()?.let {
+            (this.fragments[it] ?: "").split(FRAGMENT_SPLIT).first()
+        } ?: ""
+        return "**${header.replace("**", "")}**"
+    }
+
     fun getContent() : String{
-        return this.messages.map {
-            this.fragments[it] ?: ""
+        val content = this.messages.mapIndexed { i, it ->
+            val fragment = this.fragments[it] ?: ""
+            if(i == 0){
+                val split = fragment.split(FRAGMENT_SPLIT)
+                if(split.size > 1){
+                    split.drop(1).joinToString(FRAGMENT_SPLIT)
+                }else{
+                    ""
+                }
+            }else{
+                fragment
+            }
         }.reduceOrNull { a, b -> "$a\n$b" } ?: ""
+        return content.trim()
     }
 }
