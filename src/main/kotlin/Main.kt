@@ -9,7 +9,7 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy
 
 fun main(){
 
-    val token = "MTA2NDIyNjAzMDI0NTY1NDY2OQ.GbLwpp.MA9iB7pMe8rUBbOWeLFIS6WdweHzVhGaaauwqE"
+    val token = config().bot.token
     val bot = OEUVBot(token)
 
 }

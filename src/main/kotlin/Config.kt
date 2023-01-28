@@ -15,7 +15,8 @@ data class Config(
     )
 
     data class BotConfig(
-        val playing: String = "Ultimate Frisbee"
+        val playing: String = "Ultimate Frisbee",
+        val token: String
     )
 
     companion object{
