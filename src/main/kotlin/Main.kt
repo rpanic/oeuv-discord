@@ -55,6 +55,7 @@ class OEUVBot(token: String){
         guild.loadMembers().onSuccess {
 
             val adminUsers = guild.getMembersWithRoles(adminRole)
+            admins.clear()
             admins += adminUsers.map { it.idLong }
 
             println("Loaded Admins ${adminUsers.map { it.effectiveName }}")
