@@ -1,9 +1,14 @@
 import commands.CommandListener
 import commands.DrehscheibeCommands
+import db.BotDB
+import mail.Forwarder
+import mail.IMAPReceiver
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.utils.MemberCachePolicy
 
@@ -48,6 +53,16 @@ class OEUVBot(token: String){
 
         initCommands()
 
+//        Thread{
+//            Thread.sleep(3000L)
+//
+//            val receiver = IMAPReceiver(config().email)
+//            val forwarder = Forwarder(listOf("anjamanninger0@gmail.com"), receiver, this)
+//            val email = receiver.getEmails().last()
+//            forwarder.newEmail(email)
+//
+//        }.start()
+
     }
 
     fun reloadAdmins(callback: (Boolean) -> Unit = {}){
@@ -71,11 +86,12 @@ class OEUVBot(token: String){
             DrehscheibeCommands(this)
         )
 
-        val commands = providers.map { it.setup() }.flatten()
-        this.jda.updateCommands().addCommands(commands)
-            .complete()
+//        val commands = providers.map { it.setup() }.flatten()
+//        this.jda.updateCommands().addCommands(commands)
+//            .complete()
 
         jda.addEventListener(CommandListener(jda, providers))
+
 
 //        (providers[0] as DrehscheibeCommands).resendInfoChannelMessage()
 
@@ -86,3 +102,55 @@ class OEUVBot(token: String){
     }
 
 }
+
+fun splitDiscordMessage(text: String) : List<String>{
+
+    val agg = mutableListOf<MutableList<String>>(mutableListOf())
+    var c = 0
+
+    val limit = 2000
+
+    text.split("\n").forEach {
+
+        if(it.length > limit) return@forEach //Discard line in case one line is so big
+
+        var currSplit = agg.last()
+
+        if(c + it.length + currSplit.size + 1 > limit){ //every entry is a \n, counts as char
+            agg.add(mutableListOf())
+            c = 0
+        }
+        agg.last().add(it)
+        c += it.length
+    }
+
+    return agg.map {
+        it.joinToString("\n")
+    }
+}
+
+//fun TextChannel.sendLargeMessage(text: String) : List<Message>{
+//
+//    val agg = mutableListOf<MutableList<String>>(mutableListOf())
+//    var c = 0
+//
+//    val limit = 2000
+//
+//    text.split("\n").forEach {
+//
+//        if(it.length > limit) return@forEach //Discard line in case one line is so big
+//
+//        if(c + it.length > limit){
+//            agg.add(mutableListOf())
+//            c = 0
+//        }
+//        agg.last().add(it)
+//        c += it.length
+//    }
+//
+//    return agg.map {
+//        val msg = it.joinToString("\n")
+//        this.sendMessage(msg).complete()
+//    }
+//
+//}
