@@ -22,6 +22,8 @@ abstract class EditingInteraction(private val bot: OEUVBot, val numPreviewMessag
 
     abstract fun renderPreview(edit: AbstractOpenEdit) : String
 
+    abstract fun populateEdit(edit: AbstractOpenEdit)
+
     fun updatePreview(edit: AbstractOpenEdit){
 
         val content = renderPreview(edit)
@@ -39,9 +41,7 @@ abstract class EditingInteraction(private val bot: OEUVBot, val numPreviewMessag
 
     }
 
-    fun openEdit(member: Member){
-
-        val user = member.user
+    fun openEdit(user: User){
 
         val channel = user.openPrivateChannel().complete()
 
@@ -67,6 +67,8 @@ abstract class EditingInteraction(private val bot: OEUVBot, val numPreviewMessag
         )
 
         openEdits += openEdit
+
+        populateEdit(openEdit)
 
         updatePreview(openEdit)
 
@@ -98,6 +100,10 @@ abstract class EditingInteraction(private val bot: OEUVBot, val numPreviewMessag
     override fun onMessageReceived(event: MessageReceivedEvent) {
         println(event.toString())
         println(event.channel.type)
+
+        if(event.author.isBot){
+            return
+        }
 
         val edit = getOpenEditForUserMessage(event.channel, event.author.idLong)
         if(edit != null){

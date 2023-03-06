@@ -1,6 +1,8 @@
 import commands.CommandListener
 import commands.DrehscheibeCommands
 import db.BotDB
+import db.EmailStatus
+import desi.juan.email.api.Email
 import mail.Forwarder
 import mail.IMAPReceiver
 import net.dv8tion.jda.api.JDA
@@ -30,6 +32,8 @@ class OEUVBot(token: String){
 
     init{
 
+        BotDB.init()
+
         val builder = JDABuilder.createDefault(token)
 
         val playing = config().bot.playing
@@ -53,15 +57,20 @@ class OEUVBot(token: String){
 
         initCommands()
 
-//        Thread{
-//            Thread.sleep(3000L)
-//
-//            val receiver = IMAPReceiver(config().email)
-//            val forwarder = Forwarder(listOf("anjamanninger0@gmail.com"), receiver, this)
+        Thread{
+            Thread.sleep(3000L)
+
+            val receiver = IMAPReceiver(config().email)
+            val forwarder = Forwarder(config().email.whitelist, receiver, this)
+
+            jda.addEventListener(forwarder)
+
 //            val email = receiver.getEmails().last()
 //            forwarder.newEmail(email)
-//
-//        }.start()
+
+            forwarder.startJob()
+
+        }.start()
 
     }
 
@@ -83,7 +92,7 @@ class OEUVBot(token: String){
     fun initCommands(){
 
         val providers = listOf(
-            DrehscheibeCommands(this)
+            DrehscheibeCommands(this),
         )
 
 //        val commands = providers.map { it.setup() }.flatten()
@@ -91,7 +100,6 @@ class OEUVBot(token: String){
 //            .complete()
 
         jda.addEventListener(CommandListener(jda, providers))
-
 
 //        (providers[0] as DrehscheibeCommands).resendInfoChannelMessage()
 

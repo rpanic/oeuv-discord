@@ -53,7 +53,7 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, EditingInteraction
                 .setEphemeral(true)
                 .complete()
 
-            openEdit(event.member!!)
+            openEdit(event.member!!.user)
 
         }
 
@@ -85,6 +85,10 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, EditingInteraction
             .complete()
 
         this.bot.reloadAdmins()
+
+    }
+
+    override fun populateEdit(edit: AbstractOpenEdit){
 
     }
 
@@ -203,7 +207,7 @@ class DrehscheibeCommands(val bot: OEUVBot) : OeuvBotCommand, EditingInteraction
                         .setEphemeral(true)
                         .complete()
 
-                    openEdit(event.member!!)
+                    openEdit(event.member!!.user)
 
                 }
             }

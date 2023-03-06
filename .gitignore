@@ -44,3 +44,4 @@ gradlew.bat
 gradle/
 credentials/
 tokens/
+data/

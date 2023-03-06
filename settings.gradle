@@ -1,2 +1,3 @@
 rootProject.name = 'oeuv-bot'
+include 'email4j'
 

@@ -1,12 +1,23 @@
 import com.sksamuel.hoplite.ConfigLoader
 import java.io.File
+import kotlin.time.Duration
 
 data class Config(
 
     val channels: ChannelConfig,
     val bot: BotConfig,
+    val email: EmailConfig
 
 ) {
+
+    data class EmailConfig(
+        val channel: Long,
+        val host: String,
+        val username: String,
+        val password: String,
+        val refreshInterval: Duration,
+        val whitelist: List<String>,
+    )
 
     data class ChannelConfig(
         val drehscheibe: Long,
