@@ -27,9 +27,17 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
     val emailQueue = mutableListOf<Email>()
 
     init {
-        val latest = BotDB.emailStatus.maxByOrNull { it.received }
+        val latest = BotDB.emailStatus.filter { it.status == 3 }.maxByOrNull { it.received }
         if(latest != null){
             latestMailId = latest.id
+
+            //Add saved queued emails again
+            val email = client.getEmails()
+            val queued = BotDB.emailStatus.filter { it.received > latest.received && it.status == 2 }.toList().map { it.id }
+            if(queued.isNotEmpty()){
+                emailQueue += email.filter { it.id in queued }
+                openNextEmailEdit()
+            }
         }
     }
 
@@ -170,7 +178,8 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
                 when (event.button.id!!) {
                     "email-admin-accept" -> {
                         val content = emailEditingInteraction!!.renderPreview(edit) //Renders it right actually
-                        val channel = bot.jda.getTextChannelById(emailChannel)!!
+                        var channel = bot.jda.getNewsChannelById(emailChannel) ?: bot.jda.getTextChannelById(emailChannel)!!
+
                         channel.sendMessage(content).complete()
 
                         closeCurrentEdit()
