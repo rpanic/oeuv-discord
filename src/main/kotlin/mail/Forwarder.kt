@@ -15,6 +15,7 @@ import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 import org.jsoup.select.NodeTraversor
 import org.jsoup.select.NodeVisitor
+import splitDiscordMessage
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
@@ -180,7 +181,10 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
                         val content = emailEditingInteraction!!.renderPreview(edit) //Renders it right actually
                         var channel = bot.jda.getNewsChannelById(emailChannel) ?: bot.jda.getTextChannelById(emailChannel)!!
 
-                        channel.sendMessage(content).complete()
+                        val contents = splitDiscordMessage(content)
+                        contents.forEach {
+                            channel.sendMessage(it).complete()
+                        }
 
                         closeCurrentEdit()
                         openNextEmailEdit()
