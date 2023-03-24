@@ -5,6 +5,8 @@ import config
 import db.BotDB
 import db.EmailStatus
 import desi.juan.email.api.Email
+import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.utils.FileUpload
@@ -179,7 +181,7 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
                 when (event.button.id!!) {
                     "email-admin-accept" -> {
                         val content = emailEditingInteraction!!.renderPreview(edit) //Renders it right actually
-                        var channel = bot.jda.getNewsChannelById(emailChannel) ?: bot.jda.getTextChannelById(emailChannel)!!
+                        var channel = getChannelForEmail(emailEditingInteraction!!.email.from.firstOrNull() ?: "")
 
                         val contents = splitDiscordMessage(content)
                         contents.forEach {
@@ -200,6 +202,17 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
                 }
             }
         }
+    }
+
+    fun getChannelForEmail(email: String) : MessageChannel {
+
+        val id = if(email.endsWith("@frisbeeverband.at")){
+            config().channels.oefsvAnnouncements
+        }else{
+            emailChannel
+        }
+        return bot.jda.getNewsChannelById(id) ?: bot.jda.getTextChannelById(id)!!
+
     }
 
     fun renderEmail(email: Email) : String{
