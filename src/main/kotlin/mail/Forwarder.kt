@@ -49,7 +49,7 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
             val timeout = config().email.refreshInterval
 
             while (true) {
-                println("Checking for new emails")
+                println(" Checking for new emails (${System.currentTimeMillis()})")
 
                 checkNewMails()
 
@@ -205,6 +205,8 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
     }
 
     fun getChannelForEmail(email: String) : MessageChannel {
+
+        println("Email from $email")
 
         val id = if(email.endsWith("@frisbeeverband.at")){
             config().channels.oefsvAnnouncements
