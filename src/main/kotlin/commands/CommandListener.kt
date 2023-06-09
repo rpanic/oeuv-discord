@@ -15,6 +15,10 @@ class CommandListener(
                 println("Adding ${it.javaClass.simpleName} to listeners")
                 jda.addEventListener(it)
             }
+
+//            it.setup().forEach { command ->
+//                jda.upsertCommand(command)
+//            }
         }
     }
 

@@ -1,5 +1,6 @@
 import commands.CommandListener
 import commands.DrehscheibeCommands
+import commands.VerificationCommands
 import db.BotDB
 import db.EmailStatus
 import desi.juan.email.api.Email
@@ -30,6 +31,8 @@ class OEUVBot(token: String){
 
     val drehscheibeChannel = config().channels.drehscheibe
 
+    val adminRoleName = "Discord Admin"
+
     init{
 
         BotDB.init()
@@ -50,8 +53,6 @@ class OEUVBot(token: String){
         jda.awaitReady()
 
         guild = jda.guilds.first()
-
-        initFromDB()
 
         reloadAdmins()
 
@@ -76,7 +77,7 @@ class OEUVBot(token: String){
     }
 
     fun reloadAdmins(callback: (Boolean) -> Unit = {}){
-        val adminRole = guild.getRolesByName("Discord Admin", true).first()
+        val adminRole = guild.getRolesByName(adminRoleName, true).first()
         guild.loadMembers().onSuccess {
 
             val adminUsers = guild.getMembersWithRoles(adminRole)
@@ -94,19 +95,16 @@ class OEUVBot(token: String){
 
         val providers = listOf(
             DrehscheibeCommands(this),
+            VerificationCommands(this)
         )
 
-//        val commands = providers.map { it.setup() }.flatten()
-//        this.jda.updateCommands().addCommands(commands)
-//            .complete()
+        val commands = providers.map { it.setup() }.flatten()
+        this.jda.updateCommands().addCommands(commands)
+            .complete()
 
         jda.addEventListener(CommandListener(jda, providers))
 
 //        (providers[0] as DrehscheibeCommands).resendInfoChannelMessage()
-
-    }
-
-    fun initFromDB(){
 
     }
 

@@ -1,5 +1,6 @@
 package db
 
+import commands.UserIdDC
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -15,6 +16,7 @@ import kotlin.reflect.typeOf
 object BotDB {
 
     val emailStatus = ObservableList<EmailStatus>(mutableListOf(), "emails")
+    val sentVerificationNotifications = ObservableList<UserIdDC>(mutableListOf(), "verificationNotifications")
 
     val baseFile = File("./data/")
 
@@ -29,20 +31,23 @@ object BotDB {
         }
 
         val stores = listOf(
-            emailStatus
+            emailStatus,
+            sentVerificationNotifications
         )
 
-        stores.forEach {
-
-            parseJsonToList(it)
-
-            it.addObserver { o, _ ->
-                saveList(it)
-            }
-        }
+        initStore(emailStatus)
+        initStore(sentVerificationNotifications)
 
         initialized = true
 
+    }
+
+    inline fun <reified T : Any> initStore(list: ObservableList<T>){
+        parseJsonToList(list)
+
+        list.addObserver { o, _ ->
+            saveList(list)
+        }
     }
 
     inline fun <reified T: Any> parseJsonToList(list: ObservableList<T>){
