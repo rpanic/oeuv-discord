@@ -5,8 +5,8 @@ import config
 import db.BotDB
 import db.EmailStatus
 import desi.juan.email.api.Email
-import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
+import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.utils.FileUpload
@@ -20,6 +20,7 @@ import org.jsoup.select.NodeVisitor
 import splitDiscordMessage
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import java.util.concurrent.atomic.AtomicLong
 
 class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val bot: OEUVBot) : ListenerAdapter() {
 
@@ -28,6 +29,8 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
     var emailEditingInteraction: EmailEditingInteraction? = null
 
     val emailQueue = mutableListOf<Email>()
+
+    var lastEmailCheck = 0L
 
     init {
         val latest = BotDB.emailStatus.filter { it.status == 3 }.maxByOrNull { it.received }
@@ -42,6 +45,21 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
                 openNextEmailEdit()
             }
         }
+
+        val timeout = config().email.refreshInterval.inWholeMilliseconds
+
+        bot.jda.addEventListener(object : ListenerAdapter(){
+            override fun onGenericEvent(event: GenericEvent) {
+                super.onGenericEvent(event)
+
+                if(lastEmailCheck + timeout > System.currentTimeMillis()){
+                    println("Checking for new emails (${System.currentTimeMillis()}), method 2")
+
+                    checkNewMails()
+                    lastEmailCheck = System.currentTimeMillis()
+                }
+            }
+        })
     }
 
     fun startJob() {
@@ -52,6 +70,8 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
                 println(" Checking for new emails (${System.currentTimeMillis()})")
 
                 checkNewMails()
+
+                lastEmailCheck = System.currentTimeMillis()
 
                 Thread.sleep(timeout.inWholeMilliseconds)
             }
