@@ -6,7 +6,8 @@ data class Config(
 
     val channels: ChannelConfig,
     val bot: BotConfig,
-    val email: EmailConfig
+    val email: EmailConfig,
+//    val admins: List<Long>,
 
 ) {
 

@@ -8,6 +8,7 @@ import desi.juan.email.api.Email
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
+import net.dv8tion.jda.api.hooks.EventListener
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.utils.FileUpload
 import org.jsoup.Jsoup
@@ -21,6 +22,7 @@ import splitDiscordMessage
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.log
 
 class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val bot: OEUVBot) : ListenerAdapter() {
 
@@ -39,7 +41,7 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
 
             //Add saved queued emails again
             val email = client.getEmails()
-            val queued = BotDB.emailStatus.filter { it.received > latest.received && it.status == 2 }.toList().map { it.id }
+            val queued = BotDB.emailStatus.filter { it.received > latest.received && it.status == 1 }.toList().map { it.id }
             if(queued.isNotEmpty()){
                 emailQueue += email.filter { it.id in queued }
                 openNextEmailEdit()
@@ -48,34 +50,48 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
 
         val timeout = config().email.refreshInterval.inWholeMilliseconds
 
-        bot.jda.addEventListener(object : ListenerAdapter(){
-            override fun onGenericEvent(event: GenericEvent) {
-                super.onGenericEvent(event)
+        bot.jda.addEventListener(object : EventListener{
+            override fun onEvent(event: GenericEvent) {
+//                println("asd $lastEmailCheck")
 
-                if(lastEmailCheck + timeout > System.currentTimeMillis()){
+                if(lastEmailCheck + timeout < System.currentTimeMillis()){
                     println("Checking for new emails (${System.currentTimeMillis()}), method 2")
-
-                    checkNewMails()
                     lastEmailCheck = System.currentTimeMillis()
+
+                    Thread {
+                        checkNewMails()
+                        emailEditingInteraction.let { interaction ->
+                            if(interaction == null || interaction.closed){
+                                emailEditingInteraction = null
+                                openNextEmailEdit()
+                            }
+                        }
+                    }.start()
                 }
             }
         })
+
+        println("Registered generic event listener for forwarder job")
     }
 
     fun startJob() {
-        Thread {
-            val timeout = config().email.refreshInterval
-
-            while (true) {
-                println(" Checking for new emails (${System.currentTimeMillis()})")
-
-                checkNewMails()
-
-                lastEmailCheck = System.currentTimeMillis()
-
-                Thread.sleep(timeout.inWholeMilliseconds)
-            }
-        }.start()
+//        Thread {
+//            try {
+//                val timeout = config().email.refreshInterval
+//
+//                while (true) {
+//                    println(" Checking for new emails (${System.currentTimeMillis()})")
+//
+//                    lastEmailCheck = System.currentTimeMillis()
+//
+//                    checkNewMails()
+//
+//                    Thread.sleep(timeout.inWholeMilliseconds)
+//                }
+//            }catch(e: Exception){
+//                e.printStackTrace()
+//            }
+//        }.start()
     }
 
     fun checkNewMails() {
@@ -90,6 +106,11 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
                 println("Resuming at current id $latestMailId because no previous state was found")
             } else {
                 //Send
+
+                println(
+                    emails.map { "${it.id} ${it.subject} ${it.receivedDate}" }.joinToString("\n")
+                )
+                println(latestMailId)
 
                 val previousLatest = emails.find { it.id == latestMailId }
                 val newMails = if (previousLatest != null && previousLatest.receivedDate.isPresent) {

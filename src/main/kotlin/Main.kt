@@ -56,12 +56,16 @@ class OEUVBot(token: String){
 
         reloadAdmins()
 
+        println("1")
+
         initCommands()
+        println("2")
 
         Thread{
-            Thread.sleep(3000L)
+            Thread.sleep(300L)
 
             val receiver = IMAPReceiver(config().email)
+            println("3")
             val forwarder = Forwarder(config().email.whitelist, receiver, this)
 
             jda.addEventListener(forwarder)
@@ -89,6 +93,15 @@ class OEUVBot(token: String){
 
         }.onError { callback(false) }
 
+//        admins.clear()
+//        admins += config().admins
+//
+//        admins.forEach {
+//            jda.getU
+//        }
+
+        callback(true)
+
     }
 
     fun initCommands(){
@@ -99,8 +112,8 @@ class OEUVBot(token: String){
         )
 
         val commands = providers.map { it.setup() }.flatten()
-        this.jda.updateCommands().addCommands(commands)
-            .complete()
+//        this.jda.updateCommands().addCommands(commands)
+//            .complete()
 
         jda.addEventListener(CommandListener(jda, providers))
 

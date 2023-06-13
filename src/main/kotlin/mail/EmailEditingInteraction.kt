@@ -37,6 +37,8 @@ class EmailEditingInteraction(val bot: OEUVBot, val email: Email, val file: File
 
     val reactionMessages = mutableListOf<Pair<MessageChannel, List<Long>>>()
 
+    var closed = false
+
     override fun startEdit(channel: MessageChannel) {
 
         val msgs = mutableListOf<Long>()
@@ -76,6 +78,8 @@ class EmailEditingInteraction(val bot: OEUVBot, val email: Email, val file: File
                 it.first.deleteMessageById(msg).queue()
             }
         }
+
+        closed = true
 
     }
 
