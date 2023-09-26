@@ -75,23 +75,23 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
     }
 
     fun startJob() {
-//        Thread {
-//            try {
-//                val timeout = config().email.refreshInterval
-//
-//                while (true) {
-//                    println(" Checking for new emails (${System.currentTimeMillis()})")
-//
-//                    lastEmailCheck = System.currentTimeMillis()
-//
-//                    checkNewMails()
-//
-//                    Thread.sleep(timeout.inWholeMilliseconds)
-//                }
-//            }catch(e: Exception){
-//                e.printStackTrace()
-//            }
-//        }.start()
+        Thread {
+            try {
+                val timeout = config().email.refreshInterval
+
+                while (true) {
+                    println("Checking for new emails (${System.currentTimeMillis()})")
+
+                    lastEmailCheck = System.currentTimeMillis()
+
+                    checkNewMails()
+
+                    Thread.sleep(timeout.inWholeMilliseconds)
+                }
+            }catch(e: Exception){
+                e.printStackTrace()
+            }
+        }.start()
     }
 
     fun checkNewMails() {
@@ -226,19 +226,18 @@ class Forwarder(val whitelistedFrom: List<String>, val client: IMAPReceiver, val
 
                         val contents = splitDiscordMessage(content)
                         contents.forEach {
-                            channel.sendMessage(it).complete()
+                            val message = channel.sendMessage(it).complete()
+                            message.crosspost().complete()
                         }
 
+                        event.reply("Gesendet!").setEphemeral(true).complete()
                         closeCurrentEdit()
                         openNextEmailEdit()
-                        event.reply("Gesendet!").setEphemeral(true).queue()
                     }
                     "email-admin-decline" -> {
-
+                        event.reply("Abgelehnt!").setEphemeral(true).complete()
                         closeCurrentEdit()
                         openNextEmailEdit()
-
-                        event.reply("Abgelehnt!").setEphemeral(true).queue()
                     }
                 }
             }
